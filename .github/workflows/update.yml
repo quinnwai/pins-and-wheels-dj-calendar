@@ -24,7 +24,7 @@ jobs:
       id-token: write # GitHub OIDC token, exchanged for a short-lived Anthropic token (no API key stored)
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3 # publishes exact versions only, no floating major tag
       - run: uv sync --locked
       - run: uv run pytest -q
 
