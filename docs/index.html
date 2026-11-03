@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pins &amp; Wheels DJ Nights</title>
+<meta name="description" content="Subscribe to the guest DJ lineup for Adult Skate Night at Pins &amp; Wheels, Austin.">
+<style>
+  :root { --bg: #fbf7ff; --fg: #1d1530; --muted: #5d5470; --card: #ffffff; --line: #e4dcf0; --accent: #c2186b; --accent-fg: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #120d1c; --fg: #f3eefb; --muted: #b3a9c6; --card: #1d1630; --line: #33294a; --accent: #ff4fa3; --accent-fg: #120d1c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 34rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .5rem; }
+  p { color: var(--muted); margin: 0 0 1rem; }
+  .actions { display: grid; gap: .75rem; margin: 2rem 0; }
+  .btn { display: block; text-align: center; padding: .9rem 1rem; border-radius: .75rem; font-weight: 600;
+         text-decoration: none; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .feed { display: flex; gap: .5rem; }
+  .feed input { flex: 1; min-width: 0; padding: .7rem; border-radius: .6rem; border: 1px solid var(--line);
+                background: var(--card); color: var(--fg); font: 13px ui-monospace, monospace; }
+  .feed button { padding: .7rem 1rem; border-radius: .6rem; border: 1px solid var(--line); background: var(--card);
+                 color: var(--fg); font-weight: 600; cursor: pointer; }
+  ul { color: var(--muted); padding-left: 1.2rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pins &amp; Wheels DJ Nights</h1>
+  <p>The guest DJ lineup for Adult Skate Night at Pins &amp; Wheels in Austin, as a calendar you can subscribe to.
+     It updates itself every day from their <a href="https://www.pinsandwheels.com/events">events page</a>.</p>
+
+  <div class="actions">
+    <a class="btn primary" id="apple" href="pins-and-wheels-dj.ics">Add to Apple Calendar</a>
+    <a class="btn" id="google" href="pins-and-wheels-dj.ics">Add to Google Calendar</a>
+    <div class="feed">
+      <input id="url" readonly value="pins-and-wheels-dj.ics" aria-label="Calendar feed URL">
+      <button id="copy" type="button">Copy</button>
+    </div>
+  </div>
+
+  <ul>
+    <li><b>iPhone, iPad, Mac:</b> tap Add to Apple Calendar, then Subscribe.</li>
+    <li><b>Google Calendar:</b> open the Google link on a computer and confirm. It then shows up in the Google Calendar app on Android and iPhone too.</li>
+    <li><b>Anything else:</b> copy the feed URL and add it as a subscribed or "from URL" calendar.</li>
+    <li>Google refreshes subscribed calendars on its own schedule, usually within a day. Apple checks more often.</li>
+  </ul>
+</main>
+<script>
+  const feed = new URL("pins-and-wheels-dj.ics", location.href).href;
+  const webcal = feed.replace(/^https?:/, "webcal:");
+  document.getElementById("apple").href = webcal;
+  document.getElementById("google").href = "https://calendar.google.com/calendar/render?cid=" + encodeURIComponent(webcal);
+  document.getElementById("url").value = feed;
+  document.getElementById("copy").addEventListener("click", async (e) => {
+    try { await navigator.clipboard.writeText(feed); e.target.textContent = "Copied"; }
+    catch { document.getElementById("url").select(); }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//pins-and-wheels-dj-calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALDESC:Guest DJs at Adult Skate Night, Pins & Wheels at Playland, Au
+ stin. Updated daily from https://www.pinsandwheels.com/events
+X-WR-CALNAME:Pins & Wheels DJ Nights
+X-PUBLISHED-TTL:PT6H
+X-WR-TIMEZONE:America/Chicago
+END:VCALENDAR

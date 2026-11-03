@@ -1,0 +1,79 @@
+name: Update DJ calendar
+
+on:
+  schedule:
+    - cron: "23 13 * * *" # daily, about 8 AM in Austin; flyers have gone up both before and after the 1st
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Claude model that reads new flyers
+        type: choice
+        options: [claude-sonnet-5-5, claude-haiku-5-5]
+        default: claude-sonnet-5-5
+
+concurrency:
+  group: update-calendar
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # commit data/flyers.json and the rebuilt .ics
+      id-token: write # GitHub OIDC token, exchanged for a short-lived Anthropic token (no API key stored)
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --locked
+      - run: uv run pytest -q
+
+      # Fetched right before use: GitHub's token lives ~5 minutes and Anthropic accepts each one only once.
+      - name: Get GitHub OIDC token for Anthropic
+        run: |
+          set -euo pipefail
+          jwt=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://api.anthropic.com" | jq -er .value)
+          printf '%s' "$jwt" > "$RUNNER_TEMP/anthropic-oidc.jwt"
+          echo "Claims the federation rule sees (not secret):"
+          jq -R 'split(".")[1] | gsub("-";"+") | gsub("_";"/") | @base64d | fromjson
+                 | {sub, aud, repository, repository_owner, ref, event_name}' <<< "$jwt"
+
+      - name: Read new flyers and rebuild the calendar
+        env:
+          PNW_MODEL: ${{ inputs.model || 'claude-sonnet-5-5' }}
+          ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          ANTHROPIC_IDENTITY_TOKEN_FILE: ${{ runner.temp }}/anthropic-oidc.jwt
+        run: uv run python pnw_dj.py
+
+      # Runs even when the step above exits 1 (a rejected flyer), so other progress is still published.
+      - name: Commit changes
+        if: ${{ !cancelled() }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs
+          if git diff --cached --quiet; then echo "No changes"; else
+            git commit -m "Update DJ calendar" && git pull --rebase --quiet && git push
+          fi
+
+      - uses: actions/upload-pages-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          path: docs
+
+  deploy:
+    needs: update
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
